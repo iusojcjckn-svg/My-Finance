@@ -1,0 +1,342 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172554">
+<meta name="description" content="Personal Money Tracker">
+<link rel="manifest" href="manifest.json">
+<title>My Money Tracker Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f5f9;color:#202b40;font-family:Arial,"Noto Sans Myanmar",sans-serif;padding-bottom:85px}
+header{background:#172554;color:white;padding:20px 17px 25px;border-radius:0 0 22px 22px}
+header h2{margin:0;font-size:21px}
+header p{color:#cbd5e1;font-size:12px}
+main{max-width:600px;margin:auto;padding:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.top select{width:125px;margin:0}
+select,input{width:100%;padding:12px;border:1px solid #dce2eb;border-radius:10px;background:white;font-size:14px;margin:6px 0 12px}
+label{font-size:13px;color:#64748b}
+button{border:0;border-radius:10px;background:#2563eb;color:white;padding:12px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.panel{background:white;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 9px #00000008}
+.panel h3{font-size:16px;margin:0 0 14px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:white;border-radius:14px;padding:14px;min-width:0}
+.card small{font-size:12px;color:#64748b}
+.card strong{display:block;font-size:16px;margin-top:10px;overflow-wrap:anywhere}
+.green{color:#059669}.red{color:#dc2626}.blue{color:#2563eb}.purple{color:#9333ea}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1;min-width:0}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1;background:#e2e8f0;color:#334155}
+.tabs button.active{background:#2563eb;color:white}
+.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5e7eb;display:flex;justify-content:space-around;padding:9px 2px calc(9px + env(safe-area-inset-bottom));z-index:10}
+.nav button{background:transparent;color:#64748b;padding:6px 2px;font-size:10px;flex:1;border-radius:8px}
+.nav button.active{color:#2563eb;background:#eff6ff}
+.nav span{display:block;font-size:19px;margin-bottom:3px}
+.page{display:none}.page.active{display:block}
+.item{padding:12px 0;border-bottom:1px solid #edf0f5}
+.item:last-child{border:0}
+.itemtop{display:flex;justify-content:space-between;gap:8px}
+.item small{color:#64748b}
+.actions{display:flex;gap:7px;margin-top:8px}
+.actions button{font-size:12px;padding:8px 12px}
+.gray{background:#e2e8f0;color:#334155}
+.danger{background:#fee2e2;color:#b91c1c}
+.progress{height:9px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin:9px 0}
+.progress div{height:100%;background:#2563eb}
+.notice{font-size:12px;color:#b45309;background:#fffbeb;padding:10px;border-radius:8px;margin:7px 0}
+.muted{font-size:12px;color:#94a3b8}
+.full{width:100%}
+.hidden{display:none!important}
+canvas{width:100%;height:220px;display:block}
+footer{text-align:center;font-size:11px;color:#94a3b8;padding:20px}
+</style>
+</head>
+<body>
+<header>
+ <div class="top">
+  <div>
+   <h2>💰 My Money Tracker</h2>
+   <p id="tagline">あなたのお金をかしこく管理</p>
+  </div>
+  <select id="language" aria-label="Language">
+   <option value="ja">日本語</option>
+   <option value="my">မြန်မာ</option>
+   <option value="en">English</option>
+  </select>
+ </div>
+</header>
+
+<main>
+<!-- HOME -->
+<section id="home" class="page active">
+ <div class="top">
+  <h3 data-i="overview">今月の概要</h3>
+  <input type="month" id="homeMonth" style="width:145px">
+ </div>
+ <div class="cards">
+  <div class="card"><small data-i="income">収入</small><strong class="green" id="homeIncome">0 Ks</strong></div>
+  <div class="card"><small data-i="expense">支出</small><strong class="red" id="homeExpense">0 Ks</strong></div>
+  <div class="card"><small data-i="balance">差引残高</small><strong class="blue" id="homeBalance">0 Ks</strong></div>
+  <div class="card"><small data-i="saving">貯金総額</small><strong class="purple" id="homeSaving">0 Ks</strong></div>
+ </div>
+ <div class="panel">
+  <h3 data-i="quick">クイックメニュー</h3>
+  <div class="grid2">
+   <button onclick="openPage('transactions','income')" data-i="addIncome">＋ 収入を追加</button>
+   <button onclick="openPage('transactions','expense')" style="background:#dc2626" data-i="addExpense">－ 支出を追加</button>
+   <button onclick="openPage('savings')" style="background:#7c3aed" data-i="savings">🐷 貯金</button>
+   <button onclick="openPage('debts')" style="background:#0d9488" data-i="debts">🤝 借入・貸付</button>
+  </div>
+ </div>
+ <div class="panel">
+  <h3 data-i="chart">収入と支出</h3>
+  <canvas id="homeChart"></canvas>
+ </div>
+ <div class="panel">
+  <h3 data-i="budget">今月の予算</h3>
+  <div id="homeBudgets"></div>
+ </div>
+ <div class="panel">
+  <h3 data-i="recent">最近の取引</h3>
+  <div id="recentList"></div>
+ </div>
+</section>
+
+<!-- TRANSACTIONS -->
+<section id="transactions" class="page">
+ <div class="panel">
+  <h3 data-i="newTransaction">取引を登録</h3>
+  <div class="tabs">
+   <button id="incTab" class="active" onclick="setTxType('income')" data-i="income">収入</button>
+   <button id="expTab" onclick="setTxType('expense')" data-i="expense">支出</button>
+  </div>
+  <form id="txForm">
+   <input type="hidden" id="txId">
+   <label data-i="amount">金額 (MMK)</label>
+   <input type="number" id="txAmount" min="1" required placeholder="50000">
+   <label data-i="category">カテゴリー</label>
+   <select id="txCategory"></select>
+   <label data-i="note">メモ</label>
+   <input id="txNote" placeholder="...">
+   <label data-i="date">日付</label>
+   <input type="date" id="txDate" required>
+   <button class="full" id="txSubmit" data-i="save">保存する</button>
+   <button type="button" class="danger full hidden" id="txCancel" onclick="cancelTx()" data-i="cancel">キャンセル</button>
+  </form>
+ </div>
+ <div class="panel">
+  <h3 data-i="history">取引履歴</h3>
+  <input type="month" id="txMonth">
+  <select id="txFilter">
+   <option value="all" data-i="all">すべて</option>
+   <option value="income" data-i="income">収入</option>
+   <option value="expense" data-i="expense">支出</option>
+  </select>
+  <div id="txList"></div>
+ </div>
+</section>
+
+<!-- BUDGET -->
+<section id="budgetPage" class="page">
+ <div class="panel">
+  <h3 data-i="setBudget">予算を設定</h3>
+  <form id="budgetForm">
+   <label data-i="month">対象月</label><input type="month" id="budgetMonth" required>
+   <label data-i="category">カテゴリー</label>
+   <select id="budgetCategory"></select>
+   <label data-i="budgetAmount">予算額 (MMK)</label>
+   <input type="number" id="budgetAmount" min="1" required>
+   <button class="full" data-i="save">保存する</button>
+  </form>
+ </div>
+ <div class="panel">
+  <h3 data-i="budgetStatus">予算の使用状況</h3>
+  <input type="month" id="budgetView">
+  <div id="budgetList"></div>
+ </div>
+</section>
+
+<!-- SAVINGS -->
+<section id="savings" class="page">
+ <div class="panel">
+  <h3 data-i="newGoal">貯金目標を作成</h3>
+  <form id="goalForm">
+   <label data-i="goalName">目標名</label><input id="goalName" required>
+   <label data-i="target">目標金額 (MMK)</label><input type="number" id="goalTarget" min="1" required>
+   <label data-i="initial">現在の貯金額 (MMK)</label><input type="number" id="goalInitial" min="0" value="0" required>
+   <button class="full" data-i="save">保存する</button>
+  </form>
+ </div>
+ <div class="panel">
+  <h3 data-i="myGoals">貯金目標</h3>
+  <div id="goalList"></div>
+ </div>
+</section>
+
+<!-- DEBTS -->
+<section id="debts" class="page">
+ <div class="cards">
+  <div class="card"><small data-i="lent">貸しているお金</small><strong class="red" id="lentTotal">0 Ks</strong></div>
+  <div class="card"><small data-i="borrowed">借りているお金</small><strong class="blue" id="borrowedTotal">0 Ks</strong></div>
+ </div>
+ <div class="panel">
+  <h3 data-i="newDebt">借入・貸付を登録</h3>
+  <form id="debtForm">
+   <label data-i="debtType">種類</label>
+   <select id="debtType">
+    <option value="lent" data-i="lend">お金を貸した</option>
+    <option value="borrowed" data-i="borrow">お金を借りた</option>
+   </select>
+   <label data-i="person">相手の名前</label><input id="debtPerson" required>
+   <label data-i="amount">金額 (MMK)</label><input type="number" id="debtAmount" min="1" required>
+   <label data-i="date">日付</label><input type="date" id="debtDate" required>
+   <label data-i="note">メモ</label><input id="debtNote">
+   <button class="full" data-i="save">保存する</button>
+  </form>
+ </div>
+ <div class="panel">
+  <h3 data-i="debtHistory">借入・貸付履歴</h3>
+  <div id="debtList"></div>
+ </div>
+</section>
+
+<!-- REPORT -->
+<section id="reports" class="page">
+ <div class="panel">
+  <h3 data-i="monthlyReport">月次レポート</h3>
+  <input type="month" id="reportMonth">
+  <div class="cards">
+   <div class="card"><small data-i="income">収入</small><strong class="green" id="rIncome">0</strong></div>
+   <div class="card"><small data-i="expense">支出</small><strong class="red" id="rExpense">0</strong></div>
+   <div class="card"><small data-i="balance">差引残高</small><strong class="blue" id="rBalance">0</strong></div>
+   <div class="card"><small data-i="usage">支出率</small><strong id="rRate">0%</strong></div>
+  </div>
+ </div>
+ <div class="panel"><h3 data-i="sixMonths">過去6か月の推移</h3><canvas id="reportChart"></canvas></div>
+ <div class="panel"><h3 data-i="byCategory">カテゴリー別支出</h3><div id="categoryReport"></div></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="page">
+ <div class="panel">
+  <h3 data-i="settings">設定</h3>
+  <label data-i="language">言語</label>
+  <select id="language2">
+   <option value="ja">日本語</option>
+   <option value="my">မြန်မာ</option>
+   <option value="en">English</option>
+  </select>
+ </div>
+ <div class="panel">
+  <h3 data-i="backup">データのバックアップ</h3>
+  <button class="full" onclick="backup()" data-i="download">バックアップをダウンロード</button>
+  <button class="gray full" onclick="document.getElementById('restore').click()" data-i="restore">バックアップを復元</button>
+  <input type="file" id="restore" accept=".json" class="hidden">
+  <p class="muted" data-i="backupInfo">定期的にバックアップを保存してください。</p>
+ </div>
+ <div class="panel">
+  <h3 data-i="install">アプリのインストール</h3>
+  <button class="full" id="installBtn" onclick="installApp()" data-i="installButton">ホーム画面に追加</button>
+  <p class="muted" data-i="installInfo">対応ブラウザでインストールできます。</p>
+ </div>
+ <div class="panel">
+  <button class="danger full" onclick="clearAll()" data-i="clear">すべてのデータを削除</button>
+ </div>
+</section>
+<footer>My Money Tracker Pro · MMK</footer>
+</main>
+
+<nav class="nav">
+ <button class="active" data-page="home"><span>🏠</span><b data-i="home">ホーム</b></button>
+ <button data-page="transactions"><span>📝</span><b data-i="history">取引</b></button>
+ <button data-page="budgetPage"><span>🎯</span><b data-i="budget">予算</b></button>
+ <button data-page="reports"><span>📊</span><b data-i="reports">レポート</b></button>
+ <button data-page="settings"><span>⚙️</span><b data-i="settings">設定</b></button>
+</nav>
+
+<script>
+const T={
+ ja:{
+ tagline:"あなたのお金をかしこく管理",overview:"今月の概要",income:"収入",expense:"支出",balance:"差引残高",saving:"貯金総額",quick:"クイックメニュー",addIncome:"＋ 収入を追加",addExpense:"－ 支出を追加",chart:"収入と支出",budget:"予算",recent:"最近の取引",newTransaction:"取引を登録",amount:"金額 (MMK)",category:"カテゴリー",note:"メモ",date:"日付",save:"保存する",cancel:"キャンセル",history:"取引履歴",all:"すべて",setBudget:"予算を設定",month:"対象月",budgetAmount:"予算額 (MMK)",budgetStatus:"予算の使用状況",newGoal:"貯金目標を作成",goalName:"目標名",target:"目標金額 (MMK)",initial:"現在の貯金額 (MMK)",myGoals:"貯金目標",debts:"借入・貸付",lent:"貸しているお金",borrowed:"借りているお金",newDebt:"借入・貸付を登録",debtType:"種類",lend:"お金を貸した",borrow:"お金を借りた",person:"相手の名前",debtHistory:"借入・貸付履歴",monthlyReport:"月次レポート",usage:"支出率",sixMonths:"過去6か月の推移",byCategory:"カテゴリー別支出",settings:"設定",language:"言語",backup:"データのバックアップ",download:"バックアップをダウンロード",restore:"バックアップを復元",backupInfo:"定期的にバックアップを保存してください。",install:"アプリのインストール",installButton:"ホーム画面に追加",installInfo:"対応ブラウザでインストールできます。",clear:"すべてのデータを削除",home:"ホーム",edit:"編集",delete:"削除",empty:"データがありません",repay:"返済を記録",paid:"返済済み",remaining:"残額",saved:"貯金額",addSaving:"貯金を追加",complete:"達成",spent:"使用額",over:"予算超過",warning:"予算の80%を使用しました",done:"保存しました",confirmDelete:"削除してもよろしいですか？",restoreConfirm:"現在のデータをバックアップで置き換えますか？",invalid:"金額を正しく入力してください",repayAmount:"返済額を入力してください",installWait:"インストール方法はブラウザのメニューから確認してください。",salary:"給与",extra:"副収入",otherIncome:"その他",food:"食費",transport:"交通費",phone:"通信費",house:"家賃・住居費",shopping:"買い物",health:"医療費",education:"教育費",fun:"娯楽",otherExpense:"その他"
+ },
+ my:{
+ tagline:"သင့်ငွေကြေးကို စနစ်တကျ စီမံပါ",overview:"ဒီလ ငွေကြေးအခြေအနေ",income:"ဝင်ငွေ",expense:"အသုံးစရိတ်",balance:"အသားတင်လက်ကျန်",saving:"စုငွေစုစုပေါင်း",quick:"အမြန်လုပ်ဆောင်ရန်",addIncome:"＋ ဝင်ငွေထည့်ရန်",addExpense:"－ အသုံးစရိတ်ထည့်ရန်",chart:"ဝင်ငွေနှင့် အသုံးစရိတ်",budget:"Budget",recent:"နောက်ဆုံးစာရင်းများ",newTransaction:"စာရင်းအသစ်ထည့်ရန်",amount:"ငွေပမာဏ (MMK)",category:"အမျိုးအစား",note:"မှတ်ချက်",date:"နေ့စွဲ",save:"သိမ်းမည်",cancel:"မလုပ်တော့ပါ",history:"စာရင်းမှတ်တမ်း",all:"အားလုံး",setBudget:"Budget သတ်မှတ်ရန်",month:"လ",budgetAmount:"သတ်မှတ်ငွေ (MMK)",budgetStatus:"Budget အသုံးပြုမှု",newGoal:"ငွေစုရည်မှန်းချက်အသစ်",goalName:"ရည်မှန်းချက်အမည်",target:"စုချင်သောငွေ (MMK)",initial:"လက်ရှိစုထားငွေ (MMK)",myGoals:"ငွေစုရည်မှန်းချက်များ",debts:"အကြွေးစာရင်း",lent:"သူများကို ချေးပေးထားငွေ",borrowed:"သူများထံမှ ချေးယူထားငွေ",newDebt:"အကြွေးအသစ်ထည့်ရန်",debtType:"အမျိုးအစား",lend:"သူများကို ငွေချေးပေးခြင်း",borrow:"သူများထံမှ ငွေချေးယူခြင်း",person:"လူအမည်",debtHistory:"အကြွေးမှတ်တမ်း",monthlyReport:"လစဉ်အစီရင်ခံစာ",usage:"အသုံးပြုမှု",sixMonths:"၆ လစာ ငွေကြေးအခြေအနေ",byCategory:"အသုံးစရိတ်အမျိုးအစားအလိုက်",settings:"ဆက်တင်",language:"ဘာသာစကား",backup:"Data Backup",download:"Backup Download",restore:"Backup ပြန်ထည့်ရန်",backupInfo:"Data မပျောက်စေရန် Backup ပုံမှန်ထုတ်ထားပါ။",install:"App ထည့်သွင်းရန်",installButton:"Home Screen ထဲထည့်ရန်",installInfo:"ထောက်ပံ့ပေးသော Browser မှ Install လုပ်နိုင်သည်။",clear:"စာရင်းအားလုံးဖျက်ရန်",home:"ပင်မ",edit:"ပြင်ရန်",delete:"ဖျက်ရန်",empty:"စာရင်းမရှိသေးပါ",repay:"ပြန်ဆပ်/ပြန်ရငွေ မှတ်ရန်",paid:"ပြန်ဆပ်ပြီး",remaining:"ကျန်ငွေ",saved:"စုထားငွေ",addSaving:"ငွေထပ်စုရန်",complete:"ပြည့်မြောက်",spent:"သုံးပြီးငွေ",over:"Budget ကျော်လွန်နေပါပြီ",warning:"Budget ၏ 80% အသုံးပြုပြီးပါပြီ",done:"သိမ်းဆည်းပြီးပါပြီ",confirmDelete:"ဖျက်မှာ သေချာပါသလား?",restoreConfirm:"လက်ရှိစာရင်းကို Backup ဖြင့် အစားထိုးမလား?",invalid:"ငွေပမာဏ မှန်ကန်စွာ ထည့်ပါ",repayAmount:"ပြန်ဆပ်/ပြန်ရငွေ ပမာဏထည့်ပါ",installWait:"Browser Menu မှ Add to Home Screen ကို ရွေးပါ။",salary:"လစာ",extra:"အပိုဝင်ငွေ",otherIncome:"အခြားဝင်ငွေ",food:"စားစရိတ်",transport:"သွားလာစရိတ်",phone:"ဖုန်းဘေလ်",house:"အိမ်စရိတ်",shopping:"Shopping",health:"ကျန်းမာရေး",education:"ပညာရေး",fun:"အပန်းဖြေ",otherExpense:"အခြားအသုံးစရိတ်"
+ },
+ en:{
+ tagline:"Manage your money wisely",overview:"Monthly Overview",income:"Income",expense:"Expenses",balance:"Net Balance",saving:"Total Savings",quick:"Quick Actions",addIncome:"＋ Add Income",addExpense:"－ Add Expense",chart:"Income vs Expenses",budget:"Budget",recent:"Recent Transactions",newTransaction:"New Transaction",amount:"Amount (MMK)",category:"Category",note:"Note",date:"Date",save:"Save",cancel:"Cancel",history:"Transaction History",all:"All",setBudget:"Set Monthly Budget",month:"Month",budgetAmount:"Budget Amount (MMK)",budgetStatus:"Budget Usage",newGoal:"Create Savings Goal",goalName:"Goal Name",target:"Target Amount (MMK)",initial:"Initial Savings (MMK)",myGoals:"Savings Goals",debts:"Debt Manager",lent:"Money Lent",borrowed:"Money Borrowed",newDebt:"Add Debt Record",debtType:"Type",lend:"Money Lent",borrow:"Money Borrowed",person:"Person's Name",debtHistory:"Debt History",monthlyReport:"Monthly Report",usage:"Expense Rate",sixMonths:"Last 6 Months",byCategory:"Expenses by Category",settings:"Settings",language:"Language",backup:"Data Backup",download:"Download Backup",restore:"Restore Backup",backupInfo:"Please back up your data regularly.",install:"Install App",installButton:"Add to Home Screen",installInfo:"Install using a supported browser.",clear:"Delete All Data",home:"Home",edit:"Edit",delete:"Delete",empty:"No records yet",repay:"Record Repayment",paid:"Paid",remaining:"Remaining",saved:"Saved",addSaving:"Add Savings",complete:"Completed",spent:"Spent",over:"Budget exceeded",warning:"80% of budget used",done:"Saved successfully",confirmDelete:"Are you sure you want to delete?",restoreConfirm:"Replace current data with backup?",invalid:"Enter a valid amount",repayAmount:"Enter repayment amount",installWait:"Choose Add to Home Screen from browser menu.",salary:"Salary",extra:"Extra Income",otherIncome:"Other Income",food:"Food",transport:"Transport",phone:"Phone",house:"Housing",shopping:"Shopping",health:"Healthcare",education:"Education",fun:"Entertainment",otherExpense:"Other Expenses"
+ }
+};
+let lang="ja";
+const tr=k=>T[lang][k]||T.ja[k]||k;
+function translate(){
+ document.documentElement.lang=lang;
+ document.querySelectorAll("[data-i]").forEach(el=>{
+  let k=el.dataset.i;if(T[lang][k])el.textContent=tr(k);
+ });
+ $("tagline").textContent=tr("tagline");
+ $("language").value=lang;$("language2").value=lang;
+ setTxType(txType);
+ render();
+}
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString("en-CA");
+const currentMonth=()=>today().slice(0,7);
+const fmt=n=>Math.round(n).toLocaleString("en-US")+" Ks";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const key="myMoneyTrackerV3";
+let db={transactions:[],budgets:[],goals:[],debts:[]};
+try{
+ let d=JSON.parse(localStorage.getItem(key)||"null");
+ if(d&&["transactions","budgets","goals","debts"].every(k=>Array.isArray(d[k])))db=d;
+}catch(e){}
+function save(){localStorage.setItem(key,JSON.stringify(db))}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function sum(a){return a.reduce((x,y)=>x+y,0)}
+function total(type,m){return sum(db.transactions.filter(t=>t.type===type&&(!m||t.date.startsWith(m))).map(t=>t.amount))}
+let txType="income";
+function setTxType(t){
+ txType=t;
+ $("incTab").classList.toggle("active",t==="income");
+ $("expTab").classList.toggle("active",t==="expense");
+ let cats=t==="income"?["salary","extra","otherIncome"]:["food","transport","phone","house","shopping","health","education","fun","otherExpense"];
+ $("txCategory").innerHTML=cats.map(k=>`<option value="${k}">${tr(k)}</option>`).join("");
+}
+function openPage(p,type){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ $(p).classList.add("active");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ if(type)setTxType(type);
+ render();
+ window.scrollTo(0,0);
+}
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>openPage(b.dataset.page));
+$("language").onchange=e=>{lang=e.target.value;translate()};
+$("language2").onchange=e=>{lang=e.target.value;translate()};
+["homeMonth","txMonth","budgetView","reportMonth"].forEach(id=>$(id).value=currentMonth());
+["budgetMonth"].forEach(id=>$(id).value=currentMonth());
+["txDate","debtDate"].forEach(id=>$(id).value=today());
+$("budgetCategory").innerHTML=["food","transport","phone","house","shopping","health","education","fun","otherExpense"].map(k=>`<option value="${k}">${tr(k)}</option>`).join("");
+
+function cancelTx(){
+ $("txForm").reset();$("txId").value="";$("txDate").value=today();
+ $("txSubmit").textContent=tr("save");$("txCancel").classList.add("hidden");setTxType("income");
+}
+$("txForm").onsubmit=e=>{
+ e.preventDefault();
+ let amount=Number($("txAmount").value);
+ if(!Number.isFinite(amount)||amount<=0)return alert(tr("invalid"));
+ let id=$("txId").value;
+ let obj={id:id||uid(),type:txType,amount,category:$("txCategory").value,note:$("txNote").value,date:$("txDate").value};
+ if(id)db.transactions=db.transactions.map(t=>t.id===id?obj:t);else db.transactions.unshift(obj);
+ save();cancelTx();render();
+};
+function editTx(id){
+ let t=db.transactions.find(x=>x.id===id);if(!t)return;
+ openPage("transactions",t.type);
+ $("txId").value=id;$("txAmount").value=t.amount;$("txCategory"
